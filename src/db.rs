@@ -127,6 +127,19 @@ impl Db {
         state.entries.get(key).map(|entry| entry.data.clone())
     }
 
+    pub(crate) fn del(&self, key: &str) -> bool {
+        let mut state = self.shared.state.lock().unwrap();
+        if let Some(entry) = state.entries.remove(key) {
+            if let Some(when) = entry.expires_at {
+                // clear expiration
+                state.expirations.remove(&(when, entry.id));
+            }
+            true
+        } else {
+            false
+        }
+    }
+
     /// Set the value associated with a key along with an optional expiration
     /// Duration.
     ///
